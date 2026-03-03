@@ -1,147 +1,66 @@
 # MAP STARSYSTEM Agents
 
-Specialized agents for autonomous MAP development, testing, and deployment.
+Simple agent directives for working in the MAP STARSYSTEM.
 
-## Agent Roster
+## What These Are
 
-### 1. starship-pilot-MAP (Development Lead)
-**Role:** Primary development coordinator
-**Authority:** Flight execution, development workflows
-**Workflows:**
-- Development in MAP-dev worktree
-- Test validation
-- CICD deployment coordination
+These are **directive files** that GNOSYS uses when spawning agents via Task tool. They're not executable scripts - just instructions for what the agent should do.
 
-**When to spawn:**
-```bash
-python3 /tmp/starship-agent-system/spawn_starship.py MAP /tmp/MAP "Development mission"
-```
+## Available Agents
 
-### 2. test-validator-MAP (Test Specialist)
-**Role:** Test suite validation and coverage analysis
-**Authority:** Test analysis, regression detection
-**Workflows:**
-- Full test suite execution (210 tests)
-- Coverage analysis
-- Regression checking
+### starship-pilot.md
+General development agent. Works in MAP codebase, uses STARSYSTEM MCPs, manages worktrees.
 
-**Thresholds:**
-- Minimum pass rate: 60%
-- Coverage target: 80%
-- Performance baseline: 10s
+### test-validator.md
+Test specialist. Runs test suite, tracks quality metrics, validates coverage.
 
-**When to spawn:**
-- On PR submission
-- Before releases
-- After major refactors
+### release-manager.md
+Release coordinator. Prepares releases, validates gates, monitors CICD, manages deployments.
 
-### 3. release-manager-MAP (Release Orchestrator)
-**Role:** Release coordination and deployment
-**Authority:** Dev/staging deployment (auto), Production (requires approval)
-**Workflows:**
-- Release preparation (changelog, version bump, tagging)
-- CICD pipeline monitoring
-- Docker image tracking
-- Rollback on failure
+## How GNOSYS Spawns These
 
-**Release Gates:**
-- All tests passing
-- Coverage above threshold
-- No critical bugs
-- Changelog updated
-
-**When to spawn:**
-- For staging deployments
-- For production releases
-- For hotfix coordination
-
-## Team Coordination
-
-### Development Flow
-```
-GNOSYS (Mission Control)
-    ↓
-starship-pilot-MAP (spawned for feature work)
-    ├─→ Develops in MAP-dev worktree
-    ├─→ Calls test-validator-MAP for validation
-    └─→ Reports progress to GNOSYS
-```
-
-### Release Flow
-```
-GNOSYS (Mission Control)
-    ↓
-release-manager-MAP (spawned for release)
-    ├─→ Validates release gates
-    ├─→ Calls test-validator-MAP for final check
-    ├─→ Executes release pipeline
-    ├─→ Monitors CICD/Docker build
-    └─→ Reports to GNOSYS (requires approval for prod)
-```
-
-## Spawning Agents via GNOSYS
-
-### Using Task Tool
 ```python
+# GNOSYS spawns an agent by reading the directive file
 Task(
     subagent_type="general-purpose",
-    team_name="map-development",
     name="starship-pilot-MAP",
-    prompt="[Load agent config from .claude/agents/starship-pilot-MAP.json]",
-    description="MAP development mission"
+    prompt=Read("/tmp/MAP/.claude/agents/starship-pilot.md"),
+    description="MAP development work"
 )
 ```
 
-### Agent Configuration
-Each agent JSON defines:
-- `mcp_requirements`: Required/optional MCPs
-- `skills`: Equipped skills and domain
-- `capabilities`: What the agent can do
-- `workflows`: Defined workflow patterns
-- `communication`: How to report to GNOSYS
-- `autonomous_mode`: Decision authority and escalation triggers
+The agent automatically has:
+- STARSYSTEM MCPs (via sancrev - starlog, starship, waypoint)
+- SendMessage tool (reports to GNOSYS/team-lead)
+- All standard Claude Code tools
+
+## Architecture
+
+**STARSYSTEM** (separate from CAVE):
+- starlog - Session tracking
+- starship - Flight configs
+- waypoint - Workflow execution
+- Works in `/tmp/MAP` and worktrees
+
+**Communication**:
+- Agents report to GNOSYS (their spawner) via SendMessage
+- NOT to Conductor or CAVE
+- Agent → GNOSYS, not Agent → Conductor
 
 ## Git Worktrees
-Agents can navigate between worktrees:
+
 - `/tmp/MAP` - master (stable)
-- `/tmp/MAP-dev` - development (active)
-- `/tmp/MAP-staging` - staging (pre-release)
-- `/tmp/MAP-prod` - production (releases only)
+- `/tmp/MAP-dev` - development (active work)
+- `/tmp/MAP-staging` - pre-release
+- `/tmp/MAP-prod` - production releases
 
 ## CICD Integration
-Agents interface with GitHub Actions:
-- Monitor pipeline: https://github.com/sancovp/map/actions
-- Docker registry: ghcr.io/sancovp/map
-- Release tags: v* triggers Docker build
 
-## Communication Protocol
-All agents report to GNOSYS via message-conductor:
-```bash
-curl -X POST http://localhost:8080/messages/send \
-  -H 'Content-Type: application/json' \
-  -d '{
-    "from_agent": "starship-pilot-MAP",
-    "to_agent": "conductor",
-    "content": "Mission status update",
-    "priority": 5
-  }'
-```
-
-## Autonomous Operation
-- **starship-pilot-MAP**: Fully autonomous for development
-- **test-validator-MAP**: Fully autonomous for testing
-- **release-manager-MAP**: Semi-autonomous (prod requires approval)
-
-## Escalation Triggers
-Agents escalate to GNOSYS when:
-- Test pass rate below threshold
-- CICD pipeline failure
-- Release gate failure
-- Deployment health check failure
-- Unexpected errors
+Agents can trigger/monitor GitHub Actions:
+- Pipeline: https://github.com/sancovp/map/actions
+- Docker: ghcr.io/sancovp/map
+- Release tags (v*) trigger Docker builds
 
 ---
 
-**System Status:** Operational
-**Agent Version:** 1.0.0
-**Last Updated:** 2026-03-03
+**Keep it simple.** These are just directive files. GNOSYS spawns agents via Task tool, agents use STARSYSTEM MCPs, agents report back via SendMessage.
