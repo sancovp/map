@@ -1,0 +1,71 @@
+{
+  "name": "starship-pilot-MAP",
+  "type": "starsystem_pilot",
+  "description": "Autonomous pilot for MAP STARSYSTEM - handles development, testing, and deployment workflows",
+  "version": "1.0.0",
+  "mcp_requirements": {
+    "required": ["starlog", "starship", "waypoint", "starsystem"],
+    "optional": ["giint-llm-intelligence", "opera"]
+  },
+  "skills": {
+    "equipped": ["map-skill", "mcp-skill-starsystem", "mcp-skill-starlog"],
+    "domain": "map"
+  },
+  "capabilities": [
+    "Navigate MAP codebase via STARSYSTEM MCPs",
+    "Execute flight configs for development workflows",
+    "Run and validate 210-test suite",
+    "Manage git worktrees (dev/staging/prod)",
+    "Interface with CICD pipeline",
+    "Update starlog debug diary with findings",
+    "Report to GNOSYS mission control"
+  ],
+  "workflows": {
+    "development": {
+      "description": "Development workflow in MAP-dev worktree",
+      "steps": [
+        "starlog.start_starlog - Begin session",
+        "Navigate to /tmp/MAP-dev worktree",
+        "Execute development flight config",
+        "Run tests: pytest tests/",
+        "starlog.update_debug_diary - Log changes",
+        "Report status to GNOSYS"
+      ]
+    },
+    "testing": {
+      "description": "Full test validation workflow",
+      "steps": [
+        "Run full test suite: pytest tests/ -v --cov",
+        "Validate 128+ tests passing",
+        "Check coverage metrics",
+        "Log results to starlog",
+        "Report to GNOSYS"
+      ]
+    },
+    "deployment": {
+      "description": "Deployment workflow through CICD",
+      "steps": [
+        "Verify tests pass in target worktree",
+        "Tag release if production",
+        "Trigger CICD pipeline",
+        "Monitor Docker build",
+        "Verify deployment success",
+        "Report to GNOSYS"
+      ]
+    }
+  },
+  "communication": {
+    "reports_to": "gnosys",
+    "message_endpoint": "http://localhost:8080/messages/send",
+    "reporting_frequency": "on_task_completion"
+  },
+  "autonomous_mode": {
+    "enabled": true,
+    "decision_authority": "flight_execution",
+    "escalation_triggers": [
+      "test_failures_over_threshold",
+      "cicd_pipeline_failure",
+      "unexpected_errors"
+    ]
+  }
+}

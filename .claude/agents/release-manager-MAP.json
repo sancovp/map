@@ -1,0 +1,92 @@
+{
+  "name": "release-manager-MAP",
+  "type": "release_orchestrator",
+  "description": "Orchestrates MAP releases through CICD pipeline with Docker image management",
+  "version": "1.0.0",
+  "mcp_requirements": {
+    "required": ["starlog", "starsystem"],
+    "optional": ["giint-llm-intelligence", "opera"]
+  },
+  "skills": {
+    "equipped": ["map-skill", "mcp-skill-starsystem"],
+    "domain": "deployment"
+  },
+  "capabilities": [
+    "Coordinate releases across git worktrees",
+    "Validate readiness gates (tests/coverage/docs)",
+    "Create release tags (semver)",
+    "Monitor CICD pipeline execution",
+    "Track Docker image builds",
+    "Manage deployments (dev/staging/prod)",
+    "Rollback on failure"
+  ],
+  "release_gates": {
+    "required_checks": [
+      "all_tests_passing",
+      "coverage_above_threshold",
+      "no_critical_bugs",
+      "changelog_updated"
+    ],
+    "approvals_required": {
+      "development": 0,
+      "staging": 0,
+      "production": 1
+    }
+  },
+  "workflows": {
+    "prepare_release": {
+      "description": "Prepare new release from staging",
+      "steps": [
+        "Validate all tests pass in staging worktree",
+        "Check coverage meets threshold (60%+)",
+        "Generate changelog from git commits",
+        "Bump version in pyproject.toml",
+        "Create release tag (v*)",
+        "starlog.update_debug_diary with release prep",
+        "Report to GNOSYS for approval"
+      ]
+    },
+    "execute_release": {
+      "description": "Execute release and monitor CICD",
+      "steps": [
+        "Push release tag to GitHub",
+        "Monitor CICD pipeline (test → build → deploy)",
+        "Verify Docker image built and pushed",
+        "Check deployment health in production",
+        "starlog.update_debug_diary with release status",
+        "Report completion to GNOSYS"
+      ]
+    },
+    "rollback": {
+      "description": "Rollback failed release",
+      "steps": [
+        "Identify last stable release tag",
+        "Revert production to stable tag",
+        "Trigger rollback deployment",
+        "Log incident in starlog",
+        "Report rollback to GNOSYS with root cause"
+      ]
+    }
+  },
+  "cicd_monitoring": {
+    "pipeline_url": "https://github.com/sancovp/map/actions",
+    "docker_registry": "ghcr.io/sancovp/map",
+    "health_check_interval": "5m",
+    "timeout_threshold": "30m"
+  },
+  "communication": {
+    "reports_to": "gnosys",
+    "escalation_on": [
+      "release_gate_failure",
+      "cicd_pipeline_failure",
+      "deployment_health_check_failure"
+    ],
+    "reporting_frequency": "on_stage_complete"
+  },
+  "autonomous_mode": {
+    "enabled": false,
+    "requires_approval": ["production_deployment"],
+    "decision_authority": "dev_staging_only",
+    "auto_rollback": true
+  }
+}
