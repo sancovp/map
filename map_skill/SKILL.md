@@ -15,12 +15,12 @@ Your output is a **call to Map** — either `enrich` or `instance`. The system m
 
 **enrich** — A name is too complex to produce directly. Break it into sub-parts.
 ```bash
-python3 -m introduction_to_cs enrich <name> <part1> <part2> ...
+python3 -m map enrich <name> <part1> <part2> ...
 ```
 
 **instance** — A name is clear enough to produce. Write the content.
 ```bash
-python3 -m introduction_to_cs instance <name> '<content>'
+python3 -m map instance <name> '<content>'
 ```
 
 ## The Ratchet
@@ -34,12 +34,12 @@ python3 -m introduction_to_cs instance <name> '<content>'
 
 1. **Define** a task as parts:
 ```bash
-python3 -m introduction_to_cs define <task> <part1> <part2> ...
+python3 -m map define <task> <part1> <part2> ...
 ```
 
 2. **Check** what's next:
 ```bash
-python3 -m introduction_to_cs next
+python3 -m map next
 ```
 
 3. For each item, **decide**: enrich (break down further) or instance (produce content)?
@@ -48,15 +48,15 @@ python3 -m introduction_to_cs next
 
 5. **Monitor** progress:
 ```bash
-python3 -m introduction_to_cs queue    # see what's pending
-python3 -m introduction_to_cs tree     # see the full structure
-python3 -m introduction_to_cs stats    # completion numbers
-python3 -m introduction_to_cs show <name>  # inspect a node
+python3 -m map queue    # see what's pending
+python3 -m map tree     # see the full structure
+python3 -m map stats    # completion numbers
+python3 -m map show <name>  # inspect a node
 ```
 
 6. **Reset** to start over:
 ```bash
-python3 -m introduction_to_cs reset
+python3 -m map reset
 ```
 
 ## Commands
