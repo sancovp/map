@@ -22,11 +22,11 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import pytest
 from fractions import Fraction
 
-from base.types import Atom, Cell, NIL, Nil, Morph, Builtin, MAPObj, make_list, cons
-from base.env import Env, Frame
-from base.parser import parse, parse_one, ParseError, tokenize
-from base.eval import map_eval, run, MAPError, Macro, TailCall
-from base.stdlib import make_stdlib
+from map.base.types import Atom, Cell, NIL, Nil, Morph, Builtin, MAPObj, make_list, cons
+from map.base.env import Env, Frame
+from map.base.parser import parse, parse_one, ParseError, tokenize
+from map.base.eval import map_eval, run, MAPError, Macro, TailCall
+from map.base.stdlib import make_stdlib
 
 
 # ============================================================
@@ -631,7 +631,7 @@ class TestMetaCircular:
     @pytest.fixture
     def meta(self):
         """Boot the meta-circular evaluator."""
-        from meta.meta_interp import boot_meta
+        from map.meta.meta_interp import boot_meta
         return boot_meta()
 
     def test_meta_boot(self, meta):
@@ -699,7 +699,7 @@ class TestMetaBind:
 
     @pytest.fixture
     def meta(self):
-        from meta.meta_interp import boot_meta
+        from map.meta.meta_interp import boot_meta
         return boot_meta()
 
     def test_meta_bind_in_seq(self, meta):
@@ -739,8 +739,8 @@ class TestRegistry:
     @pytest.fixture
     def registry_setup(self):
         """Boot meta + registry with ops loaded."""
-        from meta.meta_interp import boot_meta
-        from super.registry import Registry
+        from map.meta.meta_interp import boot_meta
+        from map.super.registry import Registry
         meta = boot_meta()
         ops_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
                                'super', 'ops')
@@ -832,9 +832,9 @@ class TestHotReload:
     @pytest.fixture
     def hot_setup(self):
         """Set up registry with hot-reload in a temp directory."""
-        from meta.meta_interp import boot_meta
-        from super.registry import Registry
-        from super.hot import HotEngine
+        from map.meta.meta_interp import boot_meta
+        from map.super.registry import Registry
+        from map.super.hot import HotEngine
 
         tmpdir = tempfile.mkdtemp()
         meta = boot_meta()
@@ -933,9 +933,9 @@ class TestSelfMod:
     @pytest.fixture
     def selfmod_setup(self):
         """Full super layer boot in temp directory."""
-        from meta.meta_interp import boot_meta
-        from super.registry import Registry
-        from super.hot import HotEngine, SelfMod
+        from map.meta.meta_interp import boot_meta
+        from map.super.registry import Registry
+        from map.super.hot import HotEngine, SelfMod
 
         tmpdir = tempfile.mkdtemp()
         meta = boot_meta()
@@ -975,7 +975,7 @@ class TestSelfMod:
 
         # Rewrite using Python API directly (the MAP interface passes
         # source as a symbol atom which is tricky to construct in MAP syntax)
-        from base.types import Builtin
+        from map.base.types import Builtin
         new_source = "{def MORPH-OP | x | {* x 10}}"
         with open(op_path, 'w') as f:
             f.write(new_source + '\n')
@@ -1054,8 +1054,8 @@ class TestReify:
 
     @pytest.fixture
     def reify_setup(self):
-        from meta.meta_interp import boot_meta
-        from super.registry import Registry
+        from map.meta.meta_interp import boot_meta
+        from map.super.registry import Registry
         meta = boot_meta()
         ops_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
                                'super', 'ops')
@@ -1107,8 +1107,8 @@ class TestMatch:
 
     @pytest.fixture
     def match_setup(self):
-        from meta.meta_interp import boot_meta
-        from super.registry import Registry
+        from map.meta.meta_interp import boot_meta
+        from map.super.registry import Registry
         meta = boot_meta()
         ops_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
                                'super', 'ops')
@@ -1281,9 +1281,9 @@ class TestIntegration:
 
     def test_full_boot(self):
         """Super layer full bootstrap works."""
-        from meta.meta_interp import boot_meta
-        from super.registry import Registry
-        from super.hot import HotEngine, SelfMod
+        from map.meta.meta_interp import boot_meta
+        from map.super.registry import Registry
+        from map.super.hot import HotEngine, SelfMod
 
         meta = boot_meta()
         ops_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
@@ -1302,7 +1302,7 @@ class TestIntegration:
 
     def test_two_level_same_result(self):
         """Base eval and meta eval produce identical results."""
-        from meta.meta_interp import boot_meta
+        from map.meta.meta_interp import boot_meta
 
         meta = boot_meta()
         exprs = [
@@ -1347,8 +1347,8 @@ class TestCLI:
     def _run_cli(self, args, stdin_text=None):
         """Run the CLI as a subprocess, return (stdout, stderr, returncode)."""
         import subprocess
-        cmd = [sys.executable, '-m', 'introduction_to_cs'] + args
-        # cwd must be the directory CONTAINING introduction_to_cs/
+        cmd = [sys.executable, '-m', 'map'] + args
+        # cwd must be the directory CONTAINING map/
         project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
         proc = subprocess.run(
             cmd,
@@ -1526,7 +1526,7 @@ class TestCLI:
     def test_run_empty_stdin(self):
         """run with empty piped input returns 0 (no expressions to eval)."""
         import subprocess
-        cmd = [sys.executable, '-m', 'introduction_to_cs', 'run']
+        cmd = [sys.executable, '-m', 'map', 'run']
         project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
         proc = subprocess.run(
             cmd,
@@ -1553,30 +1553,30 @@ class TestFlows:
         shutil.rmtree(self.flows_dir, ignore_errors=True)
 
     def test_save_and_list(self):
-        from base.flows import save_flow, list_flows
+        from map.base.flows import save_flow, list_flows
         save_flow('my-flow', '{+ 1 2}', flows_dir=self.flows_dir)
         flows = list_flows(self.flows_dir)
         assert len(flows) == 1
         assert flows[0][0] == 'my-flow'
 
     def test_save_with_description(self):
-        from base.flows import save_flow, list_flows
+        from map.base.flows import save_flow, list_flows
         save_flow('test', '{+ 1 2}', description='A test flow', flows_dir=self.flows_dir)
         flows = list_flows(self.flows_dir)
         assert flows[0][1] == 'A test flow'
 
     def test_get_source(self):
-        from base.flows import save_flow, get_flow_source
+        from map.base.flows import save_flow, get_flow_source
         save_flow('arith', '{+ 1 2}', flows_dir=self.flows_dir)
         src = get_flow_source('arith', self.flows_dir)
         assert src == '{+ 1 2}'
 
     def test_get_source_not_found(self):
-        from base.flows import get_flow_source
+        from map.base.flows import get_flow_source
         assert get_flow_source('nope', self.flows_dir) is None
 
     def test_inspect_flow(self):
-        from base.flows import save_flow, inspect_flow
+        from map.base.flows import save_flow, inspect_flow
         save_flow('checker', '{when | {> x 0} | :POS | :NEG}', flows_dir=self.flows_dir)
         info = inspect_flow('checker', self.flows_dir)
         assert info is not None
@@ -1586,37 +1586,37 @@ class TestFlows:
         assert 'X' in info['dependencies']
 
     def test_inspect_not_found(self):
-        from base.flows import inspect_flow
+        from map.base.flows import inspect_flow
         assert inspect_flow('nope', self.flows_dir) is None
 
     def test_run_flow(self):
-        from base.flows import save_flow, run_flow
+        from map.base.flows import save_flow, run_flow
         save_flow('add', '{+ 10 20}', flows_dir=self.flows_dir)
         result, _ = run_flow('add', flows_dir=self.flows_dir)
         assert result == Atom(30)
 
     def test_run_flow_not_found(self):
-        from base.flows import run_flow
+        from map.base.flows import run_flow
         with pytest.raises(MAPError):
             run_flow('nope', flows_dir=self.flows_dir)
 
     def test_delete_flow(self):
-        from base.flows import save_flow, delete_flow, list_flows
+        from map.base.flows import save_flow, delete_flow, list_flows
         save_flow('temp', '{+ 1 1}', flows_dir=self.flows_dir)
         assert delete_flow('temp', self.flows_dir)
         assert list_flows(self.flows_dir) == []
 
     def test_delete_not_found(self):
-        from base.flows import delete_flow
+        from map.base.flows import delete_flow
         assert not delete_flow('nope', self.flows_dir)
 
     def test_save_invalid_source_raises(self):
-        from base.flows import save_flow
+        from map.base.flows import save_flow
         with pytest.raises(ParseError):
             save_flow('bad', '{unclosed', flows_dir=self.flows_dir)
 
     def test_multiple_flows(self):
-        from base.flows import save_flow, list_flows
+        from map.base.flows import save_flow, list_flows
         save_flow('a', '{+ 1 1}', flows_dir=self.flows_dir)
         save_flow('b', '{+ 2 2}', flows_dir=self.flows_dir)
         save_flow('c', '{+ 3 3}', flows_dir=self.flows_dir)
@@ -1629,7 +1629,7 @@ class TestFlows:
 
     def test_flow_run_with_env(self):
         """Flow can use bindings from a provided env."""
-        from base.flows import save_flow, run_flow
+        from map.base.flows import save_flow, run_flow
         save_flow('use-x', '{* x 3}', flows_dir=self.flows_dir)
         env = make_stdlib()
         _, env = run("{bind x 10}", env)
@@ -1645,20 +1645,20 @@ class TestFlows:
             shutil.rmtree(flows_dir)
         try:
             proc1 = subprocess.run(
-                [sys.executable, '-m', 'introduction_to_cs', 'save', 'test-flow', '{+ 100 200}'],
+                [sys.executable, '-m', 'map', 'save', 'test-flow', '{+ 100 200}'],
                 capture_output=True, text=True, cwd=project_root,
             )
             assert proc1.returncode == 0
 
             proc2 = subprocess.run(
-                [sys.executable, '-m', 'introduction_to_cs', 'flow-run', 'test-flow'],
+                [sys.executable, '-m', 'map', 'flow-run', 'test-flow'],
                 capture_output=True, text=True, cwd=project_root,
             )
             assert proc2.returncode == 0
             assert proc2.stdout.strip() == '300'
 
             proc3 = subprocess.run(
-                [sys.executable, '-m', 'introduction_to_cs', 'list'],
+                [sys.executable, '-m', 'map', 'list'],
                 capture_output=True, text=True, cwd=project_root,
             )
             assert proc3.returncode == 0
@@ -1679,14 +1679,14 @@ class TestHelpSystem:
     """Test the progressive disclosure help module directly."""
 
     def test_level0_breadcrumb(self):
-        from base.help import get_help
+        from map.base.help import get_help
         text, code = get_help(None)
         assert code == 0
         assert 'MAP' in text
         assert 'run' in text
 
     def test_level1_commands(self):
-        from base.help import get_help
+        from map.base.help import get_help
         text, code = get_help('commands')
         assert code == 0
         assert 'eval' in text
@@ -1694,44 +1694,44 @@ class TestHelpSystem:
         assert 'clear' in text
 
     def test_level2_eval(self):
-        from base.help import get_help
+        from map.base.help import get_help
         text, code = get_help('eval')
         assert code == 0
         assert 'expression' in text.lower()
 
     def test_level3_morph(self):
-        from base.help import get_help
+        from map.base.help import get_help
         text, code = get_help('morph')
         assert code == 0
         assert 'lambda' in text.lower() or 'morph' in text.lower()
         assert 'params' in text.lower()
 
     def test_level3_def(self):
-        from base.help import get_help
+        from map.base.help import get_help
         text, code = get_help('def')
         assert code == 0
         assert 'function' in text.lower()
 
     def test_level3_loop(self):
-        from base.help import get_help
+        from map.base.help import get_help
         text, code = get_help('loop')
         assert code == 0
         assert 'init' in text.lower()
 
     def test_level3_load(self):
-        from base.help import get_help
+        from map.base.help import get_help
         text, code = get_help('load')
         assert code == 0
         assert 'module' in text.lower()
 
     def test_unknown_topic(self):
-        from base.help import get_help
+        from map.base.help import get_help
         text, code = get_help('nonexistent')
         assert code == 1
         assert 'No help' in text
 
     def test_case_insensitive(self):
-        from base.help import get_help
+        from map.base.help import get_help
         text1, _ = get_help('EVAL')
         text2, _ = get_help('eval')
         assert text1 == text2
@@ -1751,7 +1751,7 @@ class TestPersistence:
         shutil.rmtree(self.state_dir, ignore_errors=True)
 
     def test_save_and_load_number(self):
-        from base.persistence import save_env, load_env
+        from map.base.persistence import save_env, load_env
         env = make_stdlib()
         result, env = run("{bind x 42}", env)
         save_env(env, self.state_dir)
@@ -1761,7 +1761,7 @@ class TestPersistence:
         assert result2 == Atom(42)
 
     def test_save_and_load_list(self):
-        from base.persistence import save_env, load_env
+        from map.base.persistence import save_env, load_env
         env = make_stdlib()
         result, env = run("{bind data {list 1 2 3}}", env)
         save_env(env, self.state_dir)
@@ -1771,7 +1771,7 @@ class TestPersistence:
         assert result2 == Atom(1)
 
     def test_save_and_load_morph(self):
-        from base.persistence import save_env, load_env
+        from map.base.persistence import save_env, load_env
         env = make_stdlib()
         _, env = run("{def double | x | {* x 2}}", env)
         save_env(env, self.state_dir)
@@ -1781,7 +1781,7 @@ class TestPersistence:
         assert result == Atom(42)
 
     def test_save_and_load_keyword(self):
-        from base.persistence import save_env, load_env
+        from map.base.persistence import save_env, load_env
         env = make_stdlib()
         _, env = run("{bind status :ACTIVE}", env)
         save_env(env, self.state_dir)
@@ -1791,7 +1791,7 @@ class TestPersistence:
         assert result == Atom(':ACTIVE')
 
     def test_save_and_load_string(self):
-        from base.persistence import save_env, load_env
+        from map.base.persistence import save_env, load_env
         env = make_stdlib()
         _, env = run('{bind msg "hello"}', env)
         save_env(env, self.state_dir)
@@ -1802,14 +1802,14 @@ class TestPersistence:
         assert result.val == '"hello'
 
     def test_load_nonexistent_returns_stdlib(self):
-        from base.persistence import load_env
+        from map.base.persistence import load_env
         env = load_env('/nonexistent/path')
         # Should still have stdlib
         result, _ = run("{+ 1 2}", env)
         assert result == Atom(3)
 
     def test_clear_env(self):
-        from base.persistence import save_env, load_env, clear_env
+        from map.base.persistence import save_env, load_env, clear_env
         env = make_stdlib()
         _, env = run("{bind x 99}", env)
         save_env(env, self.state_dir)
@@ -1819,7 +1819,7 @@ class TestPersistence:
             run("x", env2)
 
     def test_multiple_bindings_persist(self):
-        from base.persistence import save_env, load_env
+        from map.base.persistence import save_env, load_env
         env = make_stdlib()
         _, env = run("{bind a 1} {bind b 2} {bind c {+ a b}}", env)
         save_env(env, self.state_dir)
@@ -1841,14 +1841,14 @@ class TestPersistence:
         try:
             # Bind a value
             proc1 = subprocess.run(
-                [sys.executable, '-m', 'introduction_to_cs', 'eval', '{bind x 42}'],
+                [sys.executable, '-m', 'map', 'eval', '{bind x 42}'],
                 capture_output=True, text=True, cwd=project_root,
             )
             assert proc1.returncode == 0
 
             # Retrieve it in a separate invocation
             proc2 = subprocess.run(
-                [sys.executable, '-m', 'introduction_to_cs', 'eval', 'x'],
+                [sys.executable, '-m', 'map', 'eval', 'x'],
                 capture_output=True, text=True, cwd=project_root,
             )
             assert proc2.returncode == 0
@@ -1858,7 +1858,7 @@ class TestPersistence:
                 shutil.rmtree(state_dir)
 
     def test_nil_serialization(self):
-        from base.persistence import save_env, load_env
+        from map.base.persistence import save_env, load_env
         env = make_stdlib()
         _, env = run("{bind nothing NIL}", env)
         save_env(env, self.state_dir)
@@ -1867,7 +1867,7 @@ class TestPersistence:
         assert result == Atom(1)
 
     def test_fraction_precision(self):
-        from base.persistence import save_env, load_env
+        from map.base.persistence import save_env, load_env
         env = make_stdlib()
         _, env = run("{bind ratio {/ 22 7}}", env)
         save_env(env, self.state_dir)
